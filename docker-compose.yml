@@ -9,3 +9,21 @@ services:
       - 4000:4000
     volumes:
       - ./:/app
+
+#   mongodb:
+#     image: mongo
+#     container_name : mongodb
+#     command: mongod --auth
+#     environment:
+#       - MONGO_INITDB_DATABASE=bootcamp
+#       - MONGO_INITDB_ROOT_USERNAME=admin
+#       - MONGO_INITDB_ROOT_PASSWORD=admin
+#     ports:
+#       - '27017:27017'
+#     volumes: 
+#       # - mongodbdata:/data/db
+#       - ./init-mongo.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      
+# volumes:
+#   mongodbdata:
+#     driver: local

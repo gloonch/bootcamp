@@ -11,9 +11,15 @@ dotenv.config({path: './config/config.env'})
 
 const app = express();
 
+app.use(express.json())
 app.use(logger)
 
 app.use('/api/v1/bootcamps', bootcamps);
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, console.log(`Server is running on port ${PORT}`))
+const server = app.listen(PORT, console.log(`Server is running in ${process.env.NODE_ENV} on port ${PORT}`))
+process.on('unhandledRejection', (err, promise)=>{
+    console.log(`Error: ${err.message}`);
+    // close server & exit process
+    server.close(()=> process.exit(1));
+})

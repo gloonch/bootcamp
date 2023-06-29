@@ -1,6 +1,7 @@
 const ErrorResponse = require('../utils/errorResponse')
 const geocoder = require('../utils/geocoder');
 const Bootcamp = require('../models/Bootcamp');
+const { parse } = require('dotenv');
 
 // @desc       get all bootcamps
 // @route      GET /api/v1/bootcamps
@@ -11,7 +12,7 @@ exports.getBootcamps = async (req, res, next) => {
         const reqQuery = {...req.query}
 
         // Field to exclude
-        const removeFields = ['select', 'sort']
+        const removeFields = ['select', 'sort', 'page', 'limit'];
 
         //Loop over removeFields and delete them from the reqQuery
         removeFields.forEach(i => delete reqQuery[i]);
@@ -39,10 +40,37 @@ exports.getBootcamps = async (req, res, next) => {
             query = query.sort('-createdAt');
         }
 
+        // Pagination
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 1;
+        const startIndex = (page - 1) * limit;
+        const endIndex = page * limit;
+        const total = await Bootcamp.countDocuments()
+
+        query = query.skip(startIndex).limit(limit);
+
         // EXAMPLE: /bootcamps?select=name,description?sort=name
         // Executing query
         const bootcamps = await query;
-        res.status(200).json({success: true, count: bootcamps.length, data: bootcamps});
+
+        // EXAMPLE: /bootcamps?page=2
+        // Pagination result
+        const pagination = {};
+        if (endIndex < total) {
+            pagination.next = {
+                page: page + 1,
+                limit
+            }
+        }
+
+        if (startIndex > 0) {
+            pagination.prev = {
+                page: page - 1,
+                limit
+            }
+        }
+
+        res.status(200).json({success: true, count: bootcamps.length, pagination, data: bootcamps});
     } catch (error) {
         next(new ErrorResponse(`Error happened while retrieving data. ${error}`, 404))
     }

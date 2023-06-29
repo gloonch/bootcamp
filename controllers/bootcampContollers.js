@@ -7,7 +7,12 @@ const Bootcamp = require('../models/Bootcamp');
 // @access     Public
 exports.getBootcamps = async (req, res, next) => {
     try {
-        const bootcamps = await Bootcamp.find();
+
+        // /bootcamps?averageCost[lte]=1000
+        let query = JSON.stringify(req.query);
+        query = query.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
+        
+        const bootcamps = await Bootcamp.find(JSON.parse(query));
         res.status(200).json({success: true, count: bootcamps.length, data: bootcamps});
     } catch (error) {
         // res.status(400).json({success: false})

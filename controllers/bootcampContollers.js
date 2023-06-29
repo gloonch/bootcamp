@@ -1,3 +1,5 @@
+const ErrorResponse = require('../utils/errorResponse')
+
 const Bootcamp = require('../models/Bootcamp');
 
 // @desc       get all bootcamps
@@ -8,7 +10,8 @@ exports.getBootcamps = async (req, res, next) => {
         const bootcamps = await Bootcamp.find();
         res.status(200).json({success: true, count: bootcamps.length, data: bootcamps});
     } catch (error) {
-        res.status(400).json({success: false})
+        // res.status(400).json({success: false})
+        next(new ErrorResponse(`Error happened while retrieving data.`, 404))
     }
 }
 
@@ -24,7 +27,8 @@ exports.getBootcampById = async (req, res, next) => {
         }
         res.status(200).json({success: true, data: bootcamp})
     } catch (error) {
-        res.status(400).json({success: false})
+        // res.status(400).json({success: false})
+        next(new ErrorResponse(`Bootcamp not found with the given id of ${req.params.id}`, 404))
     }
 }
 
@@ -36,7 +40,7 @@ exports.createBootcamp = async (req, res, next) => {
         const bootcamp = await Bootcamp.create(req.body);
         res.status(201).json({success: true, data: bootcamp});
     } catch (error) {
-        res.status(400).json({success: false});
+        next(error)
     }
 }
 
@@ -52,11 +56,13 @@ exports.updateBootcamp = async (req, res, next) => {
 
         if (!bootcamp) {
             return res.status(400).json({success: false});
+            next(new ErrorResponse(`Error happened while retrieving data.`, 404))
+
         }
 
         res.status(200).json({success: true, data: bootcamp});
     } catch (error) {
-        res.status(400).json({success: false});
+        next(error)
     }
 }
 
@@ -69,6 +75,6 @@ exports.deleteBootcamp = async (req, res, next) => {
         const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id)
         res.status(200).json({success: true, data: bootcamp})
     } catch (error) {
-        res.status(400).json({success: false});
+        next(error)
     }
 }

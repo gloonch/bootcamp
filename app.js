@@ -3,7 +3,8 @@ const bootcamps = require('./routes/bootcampRoute');
 // morgan is also another middleware logger that can be used
 const logger = require('./middlewares/logger'); 
 const connectDB = require('./config/db')
-const dotenv = require('dotenv')
+const dotenv = require('dotenv');
+const errorHandler = require('./middlewares/error');
 
 connectDB();
 
@@ -15,6 +16,9 @@ app.use(express.json())
 app.use(logger)
 
 app.use('/api/v1/bootcamps', bootcamps);
+
+// Error handler middleware has to be after mounted routes so to get used
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
 const server = app.listen(PORT, console.log(`Server is running in ${process.env.NODE_ENV} on port ${PORT}`))

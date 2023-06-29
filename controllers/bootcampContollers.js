@@ -7,16 +7,44 @@ const Bootcamp = require('../models/Bootcamp');
 // @access     Public
 exports.getBootcamps = async (req, res, next) => {
     try {
+        
+        const reqQuery = {...req.query}
+
+        // Field to exclude
+        const removeFields = ['select', 'sort']
+
+        //Loop over removeFields and delete them from the reqQuery
+        removeFields.forEach(i => delete reqQuery[i]);
+        
+        // /bootcamps?select=name,description
+        let queryStr = JSON.stringify(reqQuery);
 
         // /bootcamps?averageCost[lte]=1000
-        let query = JSON.stringify(req.query);
-        query = query.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
-        
-        const bootcamps = await Bootcamp.find(JSON.parse(query));
+        queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
+
+        // finding resource
+        let query = Bootcamp.find(JSON.parse(queryStr));
+
+        // Select fields
+        if (req.query.select) {
+            const fields = req.query.select.split(',').join(' ');
+            query = query.select(fields)
+        }
+
+        // sort
+        if (req.query.sort) {
+            const sortBy = req.query.sort.split(',').join(' ');
+            query = query.sort(sortBy)
+        } else {
+            query = query.sort('-createdAt');
+        }
+
+        // EXAMPLE: /bootcamps?select=name,description?sort=name
+        // Executing query
+        const bootcamps = await query;
         res.status(200).json({success: true, count: bootcamps.length, data: bootcamps});
     } catch (error) {
-        // res.status(400).json({success: false})
-        next(new ErrorResponse(`Error happened while retrieving data.`, 404))
+        next(new ErrorResponse(`Error happened while retrieving data. ${error}`, 404))
     }
 }
 

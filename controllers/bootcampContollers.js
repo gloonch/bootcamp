@@ -131,13 +131,12 @@ exports.updateBootcamp = async (req, res, next) => {
 // @route      DELETE /api/v1/bootcamps/:id
 // @access     Public
 exports.deleteBootcamp = async (req, res, next) => {
-
-    try {
-        const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id)
-        res.status(200).json({success: true, data: bootcamp})
-    } catch (error) {
-        next(error)
+    const bootcamp = await Bootcamp.findById(req.params.id);
+    if (!bootcamp){
+        return next( new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404));
     }
+    bootcamp.deleteOne(); // model.remove() only works in find context
+    res.status(200).json({success: true, data: {}})
 }
 
 

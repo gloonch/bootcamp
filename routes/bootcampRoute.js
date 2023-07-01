@@ -5,6 +5,9 @@ const courseRoute = require('./courseRoute');
 
 router.use('/:bootcampId/courses', courseRoute);
 
+router.route('/:id/photo')
+    .put(controller.bootcampPhotoUpload)
+
 router
     .route('/')
     .get(controller.getBootcamps)

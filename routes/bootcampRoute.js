@@ -1,15 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/bootcampContollers');
+const courseRoute = require('./courseRoute');
 
-// router.get('/', controller.getBootcamps);
-// router.get('/:id', controller.getBootcampById);
-// router.post('/', controller.createBootcamp);
-// router.put('/:id', controller.updateBootcamp);
+const advancedResults = require('../middlewares/advancedResults')
+const Bootcamp = require('../models/Bootcamp')
+
+
+router.use('/:bootcampId/courses', courseRoute);
+
+router.route('/:id/photo')
+    .put(controller.bootcampPhotoUpload)
 
 router
     .route('/')
-    .get(controller.getBootcamps)
+    .get(advancedResults(Bootcamp, 'courses'), controller.getBootcamps)
     .post(controller.createBootcamp);
 
 router

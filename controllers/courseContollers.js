@@ -76,3 +76,35 @@ exports.create = async (req, res, next)=>{
         next(new ErrorResponse(`Error happened while retrieving data. ${error}`, 404))
     }
 }
+
+
+// @desc       Update course
+// @route      PUT /api/v1/courses/:id
+// @access     Private
+exports.updateCourse = async (req, res, next)=>{
+    let course = await Course.findById(req.params.id);
+
+    if (!course) return next(new ErrorResponse(`No course with the id of ${req.params.id} has found.`, 404));
+
+    course = await Course.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        data: course
+    })
+    res.status(200).json({success: true, data: course})
+
+}
+
+
+// @desc       Delete course
+// @route      DELETE /api/v1/courses/:id
+// @access     Private
+exports.deleteCourse = async (req, res, next)=>{
+    const course = await Course.findById(req.params.id);
+
+    if (!course) return next(new ErrorResponse(`No course with the id of ${req.params.id} has found.`, 404));
+
+    await course.deleteOne();
+
+    res.status(200).json({success: true, data: {}})
+
+}

@@ -9,5 +9,7 @@ router
 
 router.route('/:id')
     .get(controller.getCourseById)
+    .put(controller.updateCourse)
+    .delete(controller.deleteCourse)
 
 module.exports = router;

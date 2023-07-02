@@ -5,24 +5,24 @@ const courseRoute = require('./courseRoute');
 
 const advancedResults = require('../middlewares/advancedResults')
 const Bootcamp = require('../models/Bootcamp')
-const {protect} = require('../middlewares/auth')
+const {protect, authorize} = require('../middlewares/auth')
 
 
 router.use('/:bootcampId/courses', courseRoute);
 
 router.route('/:id/photo')
-    .put(protect, controller.bootcampPhotoUpload)
+    .put(protect, authorize('publisher', 'admin'), controller.bootcampPhotoUpload)
 
 router
     .route('/')
     .get(advancedResults(Bootcamp, 'courses'), controller.getBootcamps)
-    .post(protect, controller.createBootcamp);
+    .post(protect, authorize('publisher', 'admin'), controller.createBootcamp);
 
 router
     .route('/:id')
     .get(controller.getBootcampById)
-    .put(protect, controller.updateBootcamp)
-    .delete(protect, controller.deleteBootcamp);
+    .put(protect, authorize('publisher', 'admin'), controller.updateBootcamp)
+    .delete(protect, authorize('publisher', 'admin'), controller.deleteBootcamp);
 
 router
     .route('/radius/:zipcode/:distance').get(controller.getBootcampsInRadius);

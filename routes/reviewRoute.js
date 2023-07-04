@@ -17,6 +17,8 @@ router
 router
     .route('/:id')
     .get(controller.getReview)
+    .put(protect, authorize('admin', 'user'), controller.updateReview)
+    .delete(protect, authorize('admin', 'user'), controller.deleteReview)
 
 
 module.exports = router;

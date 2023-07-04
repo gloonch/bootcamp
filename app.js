@@ -2,6 +2,8 @@ const express = require('express');
 const bootcamps = require('./routes/bootcampRoute');
 const courses = require('./routes/courseRoute');
 const auth = require('./routes/authRoute');
+const users = require('./routes/userRoute');
+const reviews = require('./routes/reviewRoute');
 // morgan is also another middleware logger that can be used
 const logger = require('./middlewares/logger'); 
 const connectDB = require('./config/db')
@@ -26,6 +28,8 @@ app.use(cookieParser())
 app.use('/api/v1/bootcamps', bootcamps);
 app.use('/api/v1/courses', courses);
 app.use('/api/v1/auth', auth);
+app.use('/api/v1/users', users);
+app.use('/api/v1/reviews', reviews);
 
 // Error handler middleware has to be after mounted routes so to get used
 app.use(errorHandler);

@@ -2,6 +2,8 @@ const ErrorResponse = require('../utils/errorResponse');
 const Bootcamp = require('../models/Bootcamp');
 const User = require('../models/User');
 require('dotenv').config({path: './config/config.env'});
+const sendEmail = require('../utils/sendEmail');
+const crypto = require('crypto');
 
 
 // @desc       Register user
@@ -47,6 +49,132 @@ exports.login = async (req, res, next) => {
 }
 
 
+// @desc       Get the current logged in user
+// @route      POST /api/v1/auth/me
+// @access     Private
+exports.getMe = async (req, res, next) => {
+
+    const user = await User.findById(req.user.id);
+
+    res.status(200).json({
+        success: true,
+        data: user
+    })
+}
+
+
+// @desc       Update user details
+// @route      PUT /api/v1/auth/updatedetails
+// @access     Private
+exports.updateUserDetails = async (req, res, next) => {
+    const fieldsToUpdate = {
+        name: req.body.name,
+        email: req.body.email
+    }
+
+    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+        new: true,
+        runValidators: true
+    });
+
+    res.status(200).json({
+        success: true,
+        data: user
+    })
+}
+
+
+// @desc       Update password
+// @route      PUT /api/v1/auth/updatepassword
+// @access     Private
+exports.updatePassword = async (req, res, next) => {
+
+    const user = await User.findById(req.user.id).select('+password');
+    // Check current password
+    if (!(await user.matchPassword(req.body.currentPassword)))
+        return next(new ErrorResponse(`Password is incorrect.`, 401));
+
+    user.password = req.body.newPassword;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        data: user
+    })
+}
+
+
+// @desc       Forgot password
+// @route      POST /api/v1/auth/forgotPassword
+// @access     Public
+exports.forgotPassword = async (req, res, next) => {
+
+    const user = await User.findOne({email: req.body.email});
+
+    if (!user) {
+        return next(new ErrorResponse(`There is no user with the given email.`, 404))
+    }
+
+    // Get reset token
+    const resetToken = user.getResetPasswordToken();
+
+    await user.save({validateBeforeSave: false});
+
+    // Create reset url
+    const resetURL = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
+    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetURL}`;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'Password reset token',
+            message
+        });
+        res.status(200).json({success: true, data: 'Email sent'});
+    } catch (error) {
+        console.log(error);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save({validateBeforeSave: false});
+        return next(new ErrorResponse(`Email could not be sent`, 500));
+    }
+
+    res.status(200).json({
+        success: true,
+        data: user
+    })
+}
+
+
+// @desc       Reset password
+// @route      PUT /api/v1/auth/resetpassword/:resettoken
+// @access     Public
+exports.resetPassword = async (req, res, next) => {
+
+    // Get hashed token
+    const resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(req.params.resettoken)
+        .digest('hex');
+
+    const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: {$gt: Date.now()}
+    });
+
+    if (!user) return next(new ErrorResponse('Invalid token', 400));
+
+    // Then set the new password
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    sendTokenResponse(user, 200, res);
+}
+
+
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
     // Create token
@@ -67,16 +195,3 @@ const sendTokenResponse = (user, statusCode, res) => {
 
 }
 
-
-// @desc       Get the current logged in user
-// @route      POST /api/v1/auth/me
-// @access     Private
-exports.getMe = async (req, res, next) => {
-
-    const user = await User.findById(req.user.id);
-
-    res.status(200).json({
-        success: true,
-        data: user
-    })
-}
